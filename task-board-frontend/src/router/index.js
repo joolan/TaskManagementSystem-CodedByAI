@@ -15,7 +15,13 @@ const routes = [
   },
   {
     path: '/',
-    redirect: '/board'
+    redirect: '/welcome'
+  },
+  {
+    path: '/welcome',
+    name: 'Welcome',
+    component: () => import('../views/Welcome.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/board',

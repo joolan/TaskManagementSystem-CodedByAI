@@ -351,6 +351,9 @@ onMounted(async () => {
   // 登录后获取消息
   if (store.isLoggedIn) {
     await fetchMessages()
+    
+    // 检查用户是否有"任务看板"菜单权限，如果没有则跳转到欢迎页面
+    checkMenuPermissionAndRedirect()
   }
   
   // 点击外部关闭消息弹窗
@@ -381,6 +384,31 @@ watch(() => store.isLoggedIn, async (newValue) => {
     await fetchSystemName()
   }
 })
+
+// 检查用户菜单权限并决定是否跳转
+const checkMenuPermissionAndRedirect = () => {
+  const menus = store.menus || []
+  
+  // 检查是否有"任务看板"菜单权限
+  const hasBoardPermission = menus.some(menu => {
+    // 检查一级菜单
+    if (menu.path === '/board') {
+      return true
+    }
+    // 检查二级菜单
+    if (menu.children) {
+      return menu.children.some(child => child.path === '/board')
+    }
+    return false
+  })
+  
+  // 如果没有"任务看板"权限，且当前在/board 或/页面，则跳转到/welcome
+  if (!hasBoardPermission) {
+    if (route.path === '/board' || route.path === '/') {
+      router.replace('/welcome')
+    }
+  }
+}
 
 // 清理事件监听器
 onUnmounted(() => {
@@ -592,18 +620,19 @@ const handleTabClick = (tab) => {
   router.push(tab.paneName)
 }
 
-// 处理Tab关闭
+// 处理 Tab 关闭
 const handleTabRemove = (path) => {
   const index = tabs.value.findIndex(tab => tab.path === path)
   if (index > -1) {
     tabs.value.splice(index, 1)
-    // 如果关闭的是当前激活的Tab，激活前一个或第一个
+    // 如果关闭的是当前激活的 Tab，激活前一个或第一个
     if (activeTab.value === path) {
       if (tabs.value.length > 0) {
         activeTab.value = tabs.value[Math.max(0, index - 1)].path
         router.push(activeTab.value)
       } else {
-        router.push('/board')
+        // 关闭最后一个标签页，跳转到欢迎页面
+        router.push('/welcome')
       }
     }
   }
@@ -683,7 +712,8 @@ const closeRightTabs = () => {
 const closeAllTabs = () => {
   tabs.value = []
   activeTab.value = ''
-  router.push('/board')
+  // 关闭全部标签页，跳转到欢迎页面
+  router.push('/welcome')
   closeContextMenu()
 }
 
