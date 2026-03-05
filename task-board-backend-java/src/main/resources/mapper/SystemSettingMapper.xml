@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.SystemSettingMapper">
+
+    <resultMap id="SystemSettingResultMap" type="com.taskboard.backend.model.SystemSetting">
+        <id property="id" column="id"/>
+        <result property="key" column="key"/>
+        <result property="value" column="value"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByKey" parameterType="java.lang.String" resultMap="SystemSettingResultMap">
+        SELECT id, `key`, `value`, description, created_at, updated_at
+        FROM system_settings
+        WHERE `key` = #{key}
+    </select>
+
+    <select id="findAll" resultMap="SystemSettingResultMap">
+        SELECT id, `key`, `value`, description, created_at, updated_at
+        FROM system_settings
+        ORDER BY id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.SystemSetting" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO system_settings (`key`, `value`, description, created_at, updated_at)
+        VALUES (#{key}, #{value}, #{description}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.SystemSetting">
+        UPDATE system_settings
+        SET
+            `value` = #{value},
+            description = #{description},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteByKey" parameterType="java.lang.String">
+        DELETE FROM system_settings WHERE `key` = #{key}
+    </delete>
+
+</mapper>

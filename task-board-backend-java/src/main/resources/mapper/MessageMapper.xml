@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.MessageMapper">
+
+    <resultMap id="MessageResultMap" type="com.taskboard.backend.model.Message">
+        <id property="id" column="id"/>
+        <result property="messageType" column="message_type"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="redirectPath" column="redirect_path"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="MessageResultMap">
+        SELECT id, message_type, title, content, redirect_path, created_by, created_at
+        FROM messages
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="MessageResultMap">
+        SELECT id, message_type, title, content, redirect_path, created_by, created_at
+        FROM messages
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Message" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO messages (message_type, title, content, redirect_path, created_by, created_at)
+        VALUES (#{messageType}, #{title}, #{content}, #{redirectPath}, #{createdBy}, NOW())
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM messages WHERE id = #{id}
+    </delete>
+
+</mapper>

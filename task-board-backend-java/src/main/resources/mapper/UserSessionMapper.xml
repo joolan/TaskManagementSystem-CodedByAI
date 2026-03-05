@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.UserSessionMapper">
+
+    <resultMap id="UserSessionResultMap" type="com.taskboard.backend.model.UserSession">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="token" column="token"/>
+        <result property="ipAddress" column="ip_address"/>
+        <result property="userAgent" column="user_agent"/>
+        <result property="loginAt" column="login_at"/>
+        <result property="lastActivityAt" column="last_activity_at"/>
+        <result property="isActive" column="is_active"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="UserSessionResultMap">
+        SELECT *
+        FROM user_sessions
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByToken" parameterType="java.lang.String" resultMap="UserSessionResultMap">
+        SELECT *
+        FROM user_sessions
+        WHERE token = #{token}
+        AND is_active = 1
+    </select>
+
+    <select id="findByUserId" parameterType="java.lang.Long" resultMap="UserSessionResultMap">
+        SELECT *
+        FROM user_sessions
+        WHERE user_id = #{userId}
+        ORDER BY login_at DESC
+    </select>
+
+    <select id="findActiveByUserId" parameterType="java.lang.Long" resultMap="UserSessionResultMap">
+        SELECT *
+        FROM user_sessions
+        WHERE user_id = #{userId}
+        AND is_active = 1
+        AND last_activity_at >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+        ORDER BY login_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.UserSession" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_sessions (
+            user_id, token, ip_address, user_agent, 
+            login_at, last_activity_at, is_active
+        ) VALUES (
+            #{userId}, #{token}, #{ipAddress}, #{userAgent}, 
+            NOW(), NOW(), 1
+        )
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.UserSession">
+        UPDATE user_sessions
+        SET
+            last_activity_at = NOW(),
+            is_active = #{isActive}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM user_sessions WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByToken" parameterType="java.lang.String">
+        DELETE FROM user_sessions WHERE token = #{token}
+    </delete>
+
+    <delete id="deleteByUserId" parameterType="java.lang.Long">
+        DELETE FROM user_sessions WHERE user_id = #{userId}
+    </delete>
+
+    <delete id="deleteExpiredSessions">
+        DELETE FROM user_sessions 
+        WHERE is_active = 0 
+        OR last_activity_at &lt; DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+    </delete>
+
+</mapper>

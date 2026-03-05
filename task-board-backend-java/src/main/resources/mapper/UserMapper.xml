@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.taskboard.backend.model.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="name" column="name"/>
+        <result property="email" column="email"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="lastLoginAt" column="last_login_at"/>
+        <result property="failedLoginAttempts" column="failed_login_attempts"/>
+        <result property="lockedUntil" column="locked_until"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="UserResultMap">
+        SELECT 
+            id, username, password, name, email, 
+            created_at, last_login_at, failed_login_attempts, locked_until
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByUsername" parameterType="java.lang.String" resultMap="UserResultMap">
+        SELECT 
+            id, username, password, name, email, 
+            created_at, last_login_at, failed_login_attempts, locked_until
+        FROM users
+        WHERE username = #{username}
+    </select>
+
+    <select id="findByEmail" parameterType="java.lang.String" resultMap="UserResultMap">
+        SELECT 
+            id, username, password, name, email, 
+            created_at, last_login_at, failed_login_attempts, locked_until
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+    <select id="findAll" resultMap="UserResultMap">
+        SELECT 
+            id, username, password, name, email, 
+            created_at, last_login_at, failed_login_attempts, locked_until
+        FROM users
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (
+            username, password, name, email, 
+            created_at, last_login_at, failed_login_attempts, locked_until
+        ) VALUES (
+            #{username}, #{password}, #{name}, #{email}, 
+            NOW(), #{lastLoginAt}, #{failedLoginAttempts}, #{lockedUntil}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.User">
+        UPDATE users
+        SET
+            username = #{username},
+            password = #{password},
+            name = #{name},
+            email = #{email},
+            last_login_at = #{lastLoginAt},
+            failed_login_attempts = #{failedLoginAttempts},
+            locked_until = #{lockedUntil}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <!-- 查询用户的额外菜单 -->
+    <select id="findUserExtraMenus" parameterType="java.lang.Long" resultType="com.taskboard.backend.model.Menu">
+        SELECT m.*
+        FROM menus m
+        INNER JOIN user_menus um ON m.id = um.menu_id
+        WHERE um.user_id = #{userId}
+        ORDER BY m.order_index
+    </select>
+
+    <!-- 查询用户的额外权限 -->
+    <select id="findUserExtraPermissions" parameterType="java.lang.Long" resultMap="com.taskboard.backend.mapper.PermissionMapper.PermissionResultMap">
+        SELECT p.id, p.name, p.code, p.description, p.menu_id
+        FROM permissions p
+        INNER JOIN user_permissions up ON p.id = up.permission_id
+        WHERE up.user_id = #{userId}
+    </select>
+
+    <!-- 删除用户的额外菜单 -->
+    <delete id="deleteUserMenus" parameterType="java.lang.Long">
+        DELETE FROM user_menus WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 插入用户的额外菜单 -->
+    <insert id="insertUserMenu" parameterType="java.util.HashMap">
+        INSERT INTO user_menus (user_id, menu_id) VALUES (#{userId}, #{menuId})
+    </insert>
+
+    <!-- 删除用户的额外权限 -->
+    <delete id="deleteUserPermissions" parameterType="java.lang.Long">
+        DELETE FROM user_permissions WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 插入用户的额外权限 -->
+    <insert id="insertUserPermission" parameterType="java.util.HashMap">
+        INSERT INTO user_permissions (user_id, permission_id) VALUES (#{userId}, #{permissionId})
+    </insert>
+
+    <!-- 查询用户的角色 -->
+    <select id="findUserRoles" parameterType="java.lang.Long" resultType="com.taskboard.backend.model.Role">
+        SELECT r.*
+        FROM roles r
+        INNER JOIN user_roles ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId}
+    </select>
+
+    <!-- 查询用户的活跃会话数 -->
+    <select id="countUserSessions" parameterType="java.lang.Long" resultType="int">
+        SELECT COUNT(*) 
+        FROM user_sessions 
+        WHERE user_id = #{userId} 
+        AND is_active = 1
+        AND last_activity_at &gt;= DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+    </select>
+
+    <!-- 删除用户的角色 -->
+    <delete id="deleteUserRoles" parameterType="java.lang.Long">
+        DELETE FROM user_roles WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 插入用户的角色 -->
+    <insert id="insertUserRole" parameterType="java.util.HashMap">
+        INSERT INTO user_roles (user_id, role_id) VALUES (#{userId}, #{roleId})
+    </insert>
+
+    <!-- 查询用户工作量统计 -->
+    <select id="getUserWorkload" resultType="java.util.HashMap">
+        SELECT 
+            u.id,
+            u.username,
+            u.name,
+            COUNT(DISTINCT t.id) as total_tasks,
+            SUM(CASE WHEN s.name = '待办' THEN 1 ELSE 0 END) as todo_tasks,
+            SUM(CASE WHEN s.name = '进行中' THEN 1 ELSE 0 END) as in_progress_tasks,
+            SUM(CASE WHEN s.name = '已完成' THEN 1 ELSE 0 END) as completed_tasks,
+            COALESCE(SUM(th.hours), 0) as total_hours
+        FROM users u
+        LEFT JOIN tasks t ON u.id = t.assignee_id
+            AND (#{startDate} IS NULL OR #{endDate} IS NULL 
+                OR (DATE(t.created_at) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})))
+        LEFT JOIN statuses s ON t.status_id = s.id
+        LEFT JOIN task_hours th ON u.id = th.user_id
+            AND (#{startDate} IS NULL OR #{endDate} IS NULL
+                OR (DATE(th.created_at) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})))
+        WHERE u.id IN (SELECT DISTINCT assignee_id FROM tasks WHERE assignee_id IS NOT NULL)
+        GROUP BY u.id, u.username, u.name
+        ORDER BY total_tasks DESC
+    </select>
+
+</mapper>

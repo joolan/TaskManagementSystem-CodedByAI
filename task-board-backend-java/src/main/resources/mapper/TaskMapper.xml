@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.TaskMapper">
+
+    <resultMap id="TaskResultMap" type="com.taskboard.backend.model.Task">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="statusId" column="status_id"/>
+        <result property="assigneeId" column="assignee_id"/>
+        <result property="priority" column="priority"/>
+        <result property="dueDate" column="due_date"/>
+        <result property="actualStartDate" column="actual_start_date"/>
+        <result property="actualCompletionDate" column="actual_completion_date"/>
+        <result property="estimatedHours" column="estimated_hours"/>
+        <result property="actualHours" column="actual_hours"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        
+        <!-- 关联对象 -->
+        <association property="status" javaType="com.taskboard.backend.model.Status">
+            <id property="id" column="status_id"/>
+            <result property="name" column="status_name"/>
+            <result property="orderIndex" column="status_order_index"/>
+            <result property="color" column="status_color"/>
+        </association>
+        
+        <association property="assignee" javaType="com.taskboard.backend.model.User">
+            <id property="id" column="assignee_id"/>
+            <result property="username" column="assignee_username"/>
+            <result property="name" column="assignee_name"/>
+            <result property="email" column="assignee_email"/>
+        </association>
+        
+        <association property="creator" javaType="com.taskboard.backend.model.User">
+            <id property="id" column="creator_id"/>
+            <result property="username" column="creator_username"/>
+            <result property="name" column="creator_name"/>
+            <result property="email" column="creator_email"/>
+        </association>
+        
+        <association property="release" javaType="com.taskboard.backend.model.Release">
+            <id property="id" column="release_id"/>
+            <result property="title" column="release_title"/>
+        </association>
+        
+        <!-- 集合关联 -->
+        <collection property="tags" ofType="com.taskboard.backend.model.Tag">
+            <id property="id" column="tag_id"/>
+            <result property="name" column="tag_name"/>
+            <result property="color" column="tag_color"/>
+        </collection>
+        
+        <collection property="assignees" ofType="com.taskboard.backend.model.User">
+            <id property="id" column="assignee_user_id"/>
+            <result property="username" column="assignee_user_username"/>
+            <result property="name" column="assignee_user_name"/>
+        </collection>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        t.id, t.title, t.description, t.priority, t.due_date, t.actual_start_date,
+        t.actual_completion_date, t.estimated_hours, t.actual_hours, t.created_at, t.updated_at,
+        t.status_id, t.assignee_id, t.created_by, t.release_id
+    </sql>
+
+    <sql id="Join_Column_List">
+        s.id as status_id, s.name as status_name, s.order_index as status_order_index, s.color as status_color,
+        u1.id as assignee_id, u1.username as assignee_username, u1.name as assignee_name, u1.email as assignee_email,
+        u2.id as creator_id, u2.username as creator_username, u2.name as creator_name, u2.email as creator_email,
+        r.id as release_id, r.title as release_title
+    </sql>
+
+    <sql id="Join_Column_List_With_Tags">
+        s.id as status_id, s.name as status_name, s.order_index as status_order_index, s.color as status_color,
+        u1.id as assignee_id, u1.username as assignee_username, u1.name as assignee_name, u1.email as assignee_email,
+        u2.id as creator_id, u2.username as creator_username, u2.name as creator_name, u2.email as creator_email,
+        r.id as release_id, r.title as release_title,
+        t2.id as tag_id, t2.name as tag_name, t2.color as tag_color,
+        u3.id as assignee_user_id, u3.username as assignee_user_username, u3.name as assignee_user_name
+    </sql>
+
+    <select id="findById" resultMap="TaskResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List_With_Tags"/>
+        FROM tasks t
+        LEFT JOIN statuses s ON t.status_id = s.id
+        LEFT JOIN users u1 ON t.assignee_id = u1.id
+        LEFT JOIN users u2 ON t.created_by = u2.id
+        LEFT JOIN releases r ON t.release_id = r.id
+        LEFT JOIN task_tags tt ON t.id = tt.task_id
+        LEFT JOIN tags t2 ON tt.tag_id = t2.id
+        LEFT JOIN task_assignees ta ON t.id = ta.task_id
+        LEFT JOIN users u3 ON ta.user_id = u3.id
+        WHERE t.id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="TaskResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM tasks t
+        LEFT JOIN statuses s ON t.status_id = s.id
+        LEFT JOIN users u1 ON t.assignee_id = u1.id
+        LEFT JOIN users u2 ON t.created_by = u2.id
+        LEFT JOIN releases r ON t.release_id = r.id
+        ORDER BY t.created_at DESC
+    </select>
+
+    <select id="findByStatusId" resultMap="TaskResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM tasks t
+        LEFT JOIN statuses s ON t.status_id = s.id
+        LEFT JOIN users u1 ON t.assignee_id = u1.id
+        LEFT JOIN users u2 ON t.created_by = u2.id
+        LEFT JOIN releases r ON t.release_id = r.id
+        WHERE t.status_id = #{statusId}
+        ORDER BY t.created_at DESC
+    </select>
+
+    <select id="findByStatusIds" resultMap="TaskResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM tasks t
+        LEFT JOIN statuses s ON t.status_id = s.id
+        LEFT JOIN users u1 ON t.assignee_id = u1.id
+        LEFT JOIN users u2 ON t.created_by = u2.id
+        LEFT JOIN releases r ON t.release_id = r.id
+        WHERE t.status_id IN
+        <foreach collection="statusIds" item="statusId" open="(" separator="," close=")">
+            #{statusId}
+        </foreach>
+        ORDER BY t.created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Task" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tasks (
+            title, description, status_id, assignee_id, priority, due_date,
+            actual_start_date, actual_completion_date, estimated_hours, actual_hours,
+            created_by, release_id, created_at, updated_at
+        ) VALUES (
+            #{title}, #{description}, #{status.id}, #{assignee.id}, #{priority}, #{dueDate},
+            #{actualStartDate}, #{actualCompletionDate}, #{estimatedHours}, #{actualHours},
+            #{creator.id}, #{release.id}, NOW(), NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Task">
+        UPDATE tasks
+        SET
+            title = #{title},
+            description = #{description},
+            status_id = #{statusId},
+            assignee_id = #{assigneeId},
+            priority = #{priority},
+            due_date = #{dueDate},
+            actual_start_date = #{actualStartDate},
+            actual_completion_date = #{actualCompletionDate},
+            estimated_hours = #{estimatedHours},
+            actual_hours = #{actualHours},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM tasks WHERE id = #{id}
+    </delete>
+
+    <select id="countByStatusId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM tasks WHERE status_id = #{statusId}
+    </select>
+
+    <select id="countMyUncompletedTasks" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT t.id)
+        FROM tasks t
+        WHERE (t.assignee_id = #{userId})
+        AND t.status_id IN
+        <foreach collection="statusIds" item="statusId" open="(" separator="," close=")">
+            #{statusId}
+        </foreach>
+    </select>
+
+    <delete id="deleteTaskTags" parameterType="java.lang.Long">
+        DELETE FROM task_tags WHERE task_id = #{taskId}
+    </delete>
+
+    <insert id="insertTaskTag">
+        INSERT INTO task_tags (task_id, tag_id) VALUES (#{taskId}, #{tagId})
+    </insert>
+
+    <select id="countCreatedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM tasks
+        WHERE DATE(created_at) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+    <select id="countCompletedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM tasks
+        WHERE status_id = (SELECT id FROM statuses WHERE name = '已完成')
+        AND DATE(actual_completion_date) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+    <select id="countByStatusIdInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM tasks
+        WHERE status_id = #{statusId}
+        AND DATE(actual_completion_date) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+    <select id="countMyCompletedTasks" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT t.id)
+        FROM tasks t
+        WHERE t.assignee_id = #{userId}
+        AND t.status_id IN
+        <foreach collection="statusIds" item="statusId" open="(" separator="," close=")">
+            #{statusId}
+        </foreach>
+    </select>
+
+    <select id="getUncompletedStatusIds" resultType="java.lang.Long">
+        SELECT id FROM statuses WHERE name != '已完成'
+    </select>
+
+    <resultMap id="TaskTagResultMap" type="com.taskboard.backend.model.TaskTag">
+        <result property="taskId" column="tt_task_id"/>
+        <result property="tagId" column="tt_tag_id"/>
+        <association property="tag" javaType="com.taskboard.backend.model.Tag">
+            <id property="id" column="tag_id"/>
+            <result property="name" column="tag_name"/>
+            <result property="color" column="tag_color"/>
+        </association>
+    </resultMap>
+
+    <select id="findTaskTagsByTaskId" resultMap="TaskTagResultMap">
+        SELECT
+            tt.task_id as tt_task_id,
+            tt.tag_id as tt_tag_id,
+            t.id as tag_id,
+            t.name as tag_name,
+            t.color as tag_color
+        FROM task_tags tt
+        LEFT JOIN tags t ON tt.tag_id = t.id
+        WHERE tt.task_id = #{taskId}
+    </select>
+
+</mapper>

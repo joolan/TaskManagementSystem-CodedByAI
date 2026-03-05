@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.MenuMapper">
+
+    <resultMap id="MenuResultMap" type="com.taskboard.backend.model.Menu">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="path" column="path"/>
+        <result property="component" column="component"/>
+        <result property="icon" column="icon"/>
+        <result property="orderIndex" column="order_index"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="type" column="type"/>
+        <result property="externalUrl" column="external_url"/>
+        <result property="target" column="target"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="MenuResultMap">
+        SELECT id, name, path, component, icon, order_index, parent_id, type, external_url, target, status
+        FROM menus
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="MenuResultMap">
+        SELECT id, name, path, component, icon, order_index, parent_id, type, external_url, target, status
+        FROM menus
+        ORDER BY order_index ASC
+    </select>
+
+    <select id="findByUserId" parameterType="java.lang.Long" resultMap="MenuResultMap">
+        SELECT DISTINCT m.id, m.name, m.path, m.component, m.icon, m.order_index, m.parent_id, m.type, m.external_url, m.target, m.status
+        FROM menus m
+        INNER JOIN role_menus rm ON m.id = rm.menu_id
+        INNER JOIN user_roles ur ON rm.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        ORDER BY m.order_index ASC
+    </select>
+    
+    <select id="findByRoleId" parameterType="java.lang.Long" resultMap="MenuResultMap">
+        SELECT DISTINCT m.id, m.name, m.path, m.component, m.icon, m.order_index, m.parent_id, m.type, m.external_url, m.target, m.status
+        FROM menus m
+        INNER JOIN role_menus rm ON m.id = rm.menu_id
+        WHERE rm.role_id = #{roleId}
+        ORDER BY m.order_index ASC
+    </select>
+
+    <select id="findMenuIdsByRoleId" parameterType="java.lang.Long" resultType="java.lang.Long">
+        SELECT DISTINCT m.id
+        FROM menus m
+        INNER JOIN role_menus rm ON m.id = rm.menu_id
+        WHERE rm.role_id = #{roleId}
+        AND m.status = 1
+    </select>
+    
+    <select id="findByIdsAndStatus" resultMap="MenuResultMap">
+        SELECT DISTINCT m.id, m.name, m.path, m.component, m.icon, m.order_index, m.parent_id, m.type, m.external_url, m.target, m.status
+        FROM menus m
+        WHERE m.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND m.status = #{status}
+        ORDER BY m.order_index ASC
+    </select>
+
+    <select id="findParentMenus" resultMap="MenuResultMap">
+        SELECT id, name, path, component, icon, order_index, parent_id, type, external_url, target, status
+        FROM menus
+        WHERE parent_id IS NULL OR parent_id = 0
+        ORDER BY order_index ASC
+    </select>
+
+    <select id="findChildren" parameterType="java.lang.Long" resultMap="MenuResultMap">
+        SELECT id, name, path, component, icon, order_index, parent_id, type, external_url, target, status
+        FROM menus
+        WHERE parent_id = #{parentId}
+        ORDER BY order_index ASC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Menu" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO menus (name, path, component, icon, order_index, parent_id, type, external_url, target, status)
+        VALUES (#{name}, #{path}, #{component}, #{icon}, #{orderIndex}, #{parentId}, #{type}, #{externalUrl}, #{target}, #{status})
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Menu">
+        UPDATE menus
+        SET
+            name = #{name},
+            path = #{path},
+            component = #{component},
+            icon = #{icon},
+            order_index = #{orderIndex},
+            parent_id = #{parentId},
+            type = #{type},
+            external_url = #{externalUrl},
+            target = #{target},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM menus WHERE id = #{id}
+    </delete>
+
+</mapper>

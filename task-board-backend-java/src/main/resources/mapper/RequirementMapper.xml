@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.RequirementMapper">
+
+    <resultMap id="RequirementResultMap" type="com.taskboard.backend.model.Requirement">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="status" column="status"/>
+        <result property="priority" column="priority"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="source" column="source"/>
+        <result property="tagId" column="tag_id"/>
+        <result property="plannedCompletionDate" column="planned_completion_date"/>
+        <result property="actualCompletionDate" column="actual_completion_date"/>
+        <result property="taskId" column="task_id"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="RequirementResultMap">
+        SELECT id, name, description, status, priority, created_by, source, tag_id,
+               planned_completion_date, actual_completion_date, task_id, created_at, updated_at
+        FROM requirements
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="RequirementResultMap">
+        SELECT id, name, description, status, priority, created_by, source, tag_id,
+               planned_completion_date, actual_completion_date, task_id, created_at, updated_at
+        FROM requirements
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Requirement" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO requirements (name, description, status, priority, created_by, source, tag_id,
+                                  planned_completion_date, actual_completion_date, task_id, created_at, updated_at)
+        VALUES (#{name}, #{description}, #{status}, #{priority}, #{createdBy}, #{source}, #{tagId},
+                #{plannedCompletionDate}, #{actualCompletionDate}, #{taskId}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Requirement">
+        UPDATE requirements
+        SET
+            name = #{name},
+            description = #{description},
+            status = #{status},
+            priority = #{priority},
+            source = #{source},
+            tag_id = #{tagId},
+            planned_completion_date = #{plannedCompletionDate},
+            actual_completion_date = #{actualCompletionDate},
+            task_id = #{taskId},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM requirements WHERE id = #{id}
+    </delete>
+
+    <select id="countMyPendingRequirements" resultType="int">
+        SELECT COUNT(*)
+        FROM requirements r
+        WHERE r.created_by = #{userId}
+        AND r.status IN
+        <foreach collection="statusList" item="status" open="(" separator="," close=")">
+            #{status}
+        </foreach>
+    </select>
+
+    <select id="countCreatedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM requirements
+        WHERE DATE(created_at) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+    <select id="countCompletedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM requirements
+        WHERE status = '已完成'
+        AND DATE(actual_completion_date) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+</mapper>

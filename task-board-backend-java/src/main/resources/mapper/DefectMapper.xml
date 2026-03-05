@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.DefectMapper">
+
+    <resultMap id="DefectResultMap" type="com.taskboard.backend.model.Defect">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="status" column="status"/>
+        <result property="releaseId" column="release_id"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="assigneeId" column="assignee_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="DefectResultMap">
+        SELECT id, title, description, status, release_id, created_by, assignee_id, created_at, updated_at
+        FROM defects
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="DefectResultMap">
+        SELECT id, title, description, status, release_id, created_by, assignee_id, created_at, updated_at
+        FROM defects
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Defect" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO defects (title, description, status, release_id, created_by, assignee_id, created_at, updated_at)
+        VALUES (#{title}, #{description}, #{status}, #{releaseId}, #{createdBy}, #{assigneeId}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Defect">
+        UPDATE defects
+        SET
+            title = #{title},
+            description = #{description},
+            status = #{status},
+            release_id = #{releaseId},
+            assignee_id = #{assigneeId},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM defects WHERE id = #{id}
+    </delete>
+
+    <select id="countMyUncompletedDefects" resultType="int">
+        SELECT COUNT(*)
+        FROM defects d
+        WHERE d.assignee_id = #{userId}
+        AND d.status IN
+        <foreach collection="statusList" item="status" open="(" separator="," close=")">
+            #{status}
+        </foreach>
+    </select>
+
+    <select id="countCreatedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM defects
+        WHERE DATE(created_at) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+    <select id="countCompletedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM defects
+        WHERE status = '已解决'
+        AND DATE(updated_at) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+</mapper>

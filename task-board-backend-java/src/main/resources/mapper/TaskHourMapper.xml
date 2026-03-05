@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.TaskHourMapper">
+
+    <resultMap id="TaskHourResultMap" type="com.taskboard.backend.model.TaskHour">
+        <id property="id" column="id"/>
+        <result property="taskId" column="task_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="createdById" column="created_by"/>
+        <result property="hours" column="hours"/>
+        <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
+        
+        <!-- 关联对象 -->
+        <association property="task" javaType="com.taskboard.backend.model.Task">
+            <id property="id" column="task_id"/>
+            <result property="title" column="task_title"/>
+        </association>
+        
+        <association property="user" javaType="com.taskboard.backend.model.User">
+            <id property="id" column="u1_id"/>
+            <result property="username" column="u1_username"/>
+            <result property="name" column="u1_name"/>
+        </association>
+        
+        <association property="creator" javaType="com.taskboard.backend.model.User">
+            <id property="id" column="u2_id"/>
+            <result property="username" column="u2_username"/>
+            <result property="name" column="u2_name"/>
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        th.id, th.task_id, th.user_id, th.hours, th.remark, th.created_at, th.created_by
+    </sql>
+
+    <sql id="Join_Column_List">
+        t.id as task_id, t.title as task_title,
+        u1.id as u1_id, u1.username as u1_username, u1.name as u1_name,
+        u2.id as u2_id, u2.username as u2_username, u2.name as u2_name
+    </sql>
+
+    <select id="findById" resultMap="TaskHourResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM task_hours th
+        LEFT JOIN tasks t ON th.task_id = t.id
+        LEFT JOIN users u1 ON th.user_id = u1.id
+        LEFT JOIN users u2 ON th.created_by = u2.id
+        WHERE th.id = #{id}
+    </select>
+
+    <select id="findByTaskId" resultMap="TaskHourResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM task_hours th
+        LEFT JOIN tasks t ON th.task_id = t.id
+        LEFT JOIN users u1 ON th.user_id = u1.id
+        LEFT JOIN users u2 ON th.created_by = u2.id
+        WHERE th.task_id = #{taskId}
+        ORDER BY th.created_at DESC
+    </select>
+
+    <select id="findByUserId" resultMap="TaskHourResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM task_hours th
+        LEFT JOIN tasks t ON th.task_id = t.id
+        LEFT JOIN users u1 ON th.user_id = u1.id
+        LEFT JOIN users u2 ON th.created_by = u2.id
+        WHERE th.user_id = #{userId}
+        ORDER BY th.created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.TaskHour" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO task_hours (task_id, user_id, hours, remark, created_by, created_at)
+        VALUES (#{task.id}, #{user.id}, #{hours}, #{remark}, #{creator.id}, #{createdAt})
+    </insert>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM task_hours WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.StatusMapper">
+
+    <resultMap id="StatusResultMap" type="com.taskboard.backend.model.Status">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="orderIndex" column="order_index"/>
+        <result property="color" column="color"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="StatusResultMap">
+        SELECT id, name, order_index, color
+        FROM statuses
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="StatusResultMap">
+        SELECT id, name, order_index, color
+        FROM statuses
+        ORDER BY order_index ASC
+    </select>
+
+    <select id="findByName" parameterType="java.lang.String" resultMap="StatusResultMap">
+        SELECT id, name, order_index, color
+        FROM statuses
+        WHERE name = #{name}
+    </select>
+
+    <select id="findByNameIn" resultMap="StatusResultMap">
+        SELECT id, name, order_index, color
+        FROM statuses
+        WHERE name IN
+        <foreach collection="names" item="name" open="(" separator="," close=")">
+            #{name}
+        </foreach>
+        ORDER BY order_index ASC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Status" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO statuses (name, order_index, color)
+        VALUES (#{name}, #{orderIndex}, #{color})
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Status">
+        UPDATE statuses
+        SET
+            name = #{name},
+            order_index = #{orderIndex},
+            color = #{color}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM statuses WHERE id = #{id}
+    </delete>
+    
+    <!-- 获取任务状态统计 -->
+    <select id="findTaskStatusStats" resultType="java.util.Map">
+        SELECT 
+            s.name as status_name,
+            COUNT(t.id) as count,
+            s.color as color
+        FROM statuses s
+        LEFT JOIN tasks t ON t.status_id = s.id
+        GROUP BY s.id, s.name, s.color
+        ORDER BY s.order_index ASC
+    </select>
+
+</mapper>

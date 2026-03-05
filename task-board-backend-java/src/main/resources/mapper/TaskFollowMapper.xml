@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.TaskFollowMapper">
+
+    <select id="countMyFollowedUncompletedTasks" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT tf.task_id)
+        FROM task_follows tf
+        INNER JOIN tasks t ON tf.task_id = t.id
+        WHERE tf.user_id = #{userId}
+        AND t.status_id IN
+        <foreach collection="statusIds" item="statusId" open="(" separator="," close=")">
+            #{statusId}
+        </foreach>
+    </select>
+    
+    <resultMap id="TaskFollowResultMap" type="com.taskboard.backend.model.TaskFollow">
+        <id property="id" column="id"/>
+        <result property="createdAt" column="created_at"/>
+        
+        <association property="task" javaType="com.taskboard.backend.model.Task">
+            <id property="id" column="task_id"/>
+            <result property="title" column="task_title"/>
+        </association>
+        
+        <association property="user" javaType="com.taskboard.backend.model.User">
+            <id property="id" column="user_id"/>
+            <result property="username" column="user_username"/>
+            <result property="name" column="user_name"/>
+        </association>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        tf.id, tf.task_id, tf.user_id, tf.created_at
+    </sql>
+    
+    <sql id="Join_Column_List">
+        t.id as task_id, t.title as task_title,
+        u.id as user_id, u.username as user_username, u.name as user_name
+    </sql>
+    
+    <select id="findByTaskIdAndUserId" resultMap="TaskFollowResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM task_follows tf
+        LEFT JOIN tasks t ON tf.task_id = t.id
+        LEFT JOIN users u ON tf.user_id = u.id
+        WHERE tf.task_id = #{taskId} AND tf.user_id = #{userId}
+    </select>
+    
+    <select id="findByTaskId" resultMap="TaskFollowResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM task_follows tf
+        LEFT JOIN tasks t ON tf.task_id = t.id
+        LEFT JOIN users u ON tf.user_id = u.id
+        WHERE tf.task_id = #{taskId}
+        ORDER BY tf.created_at DESC
+    </select>
+    
+    <insert id="insert" parameterType="com.taskboard.backend.model.TaskFollow" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO task_follows (task_id, user_id, created_at)
+        VALUES (#{task.id}, #{user.id}, #{createdAt})
+    </insert>
+    
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM task_follows WHERE id = #{id}
+    </delete>
+    
+    <delete id="deleteByTaskIdAndUserId">
+        DELETE FROM task_follows WHERE task_id = #{taskId} AND user_id = #{userId}
+    </delete>
+
+    <select id="findFollowedTaskIds" resultType="java.lang.Long">
+        SELECT task_id FROM task_follows WHERE user_id = #{userId}
+    </select>
+
+</mapper>

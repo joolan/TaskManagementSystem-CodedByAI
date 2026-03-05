@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.TagMapper">
+
+    <resultMap id="TagResultMap" type="com.taskboard.backend.model.Tag">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="color" column="color"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="TagResultMap">
+        SELECT id, name, color
+        FROM tags
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="TagResultMap">
+        SELECT id, name, color
+        FROM tags
+        ORDER BY name ASC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Tag" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tags (name, color)
+        VALUES (#{name}, #{color})
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Tag">
+        UPDATE tags
+        SET
+            name = #{name},
+            color = #{color}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM tags WHERE id = #{id}
+    </delete>
+
+</mapper>

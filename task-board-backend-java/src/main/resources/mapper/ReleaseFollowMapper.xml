@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.ReleaseFollowMapper">
+
+    <select id="countMyFollowedUncompletedReleases" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT rf.release_id)
+        FROM release_follows rf
+        INNER JOIN releases r ON rf.release_id = r.id
+        WHERE rf.user_id = #{userId}
+        AND r.status IN
+        <foreach collection="statuses" item="status" open="(" separator="," close=")">
+            #{status}
+        </foreach>
+    </select>
+
+    <select id="findFollowedReleaseIds" resultType="java.lang.Long">
+        SELECT release_id FROM release_follows WHERE user_id = #{userId}
+    </select>
+
+</mapper>

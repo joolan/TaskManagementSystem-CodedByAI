@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.ReleaseMapper">
+
+    <resultMap id="ReleaseResultMap" type="com.taskboard.backend.model.Release">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="status" column="status"/>
+        <result property="plannedReleaseDate" column="planned_release_date"/>
+        <result property="actualReleaseDate" column="actual_release_date"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findById" parameterType="java.lang.Long" resultMap="ReleaseResultMap">
+        SELECT id, title, description, status, planned_release_date, actual_release_date,
+               created_by, created_at, updated_at
+        FROM releases
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="ReleaseResultMap">
+        SELECT id, title, description, status, planned_release_date, actual_release_date,
+               created_by, created_at, updated_at
+        FROM releases
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByStatus" parameterType="java.lang.String" resultMap="ReleaseResultMap">
+        SELECT id, title, description, status, planned_release_date, actual_release_date,
+               created_by, created_at, updated_at
+        FROM releases
+        WHERE status = #{status}
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Release" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO releases (title, description, status, planned_release_date, actual_release_date,
+                              created_by, created_at, updated_at)
+        VALUES (#{title}, #{description}, #{status}, #{plannedReleaseDate}, #{actualReleaseDate},
+                #{createdBy}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Release">
+        UPDATE releases
+        SET
+            title = #{title},
+            description = #{description},
+            status = #{status},
+            planned_release_date = #{plannedReleaseDate},
+            actual_release_date = #{actualReleaseDate},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM releases WHERE id = #{id}
+    </delete>
+
+    <select id="countCreatedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM releases
+        WHERE DATE(created_at) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+    <select id="countCompletedInDateRange" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM releases
+        WHERE status = '已发布'
+        AND DATE(actual_release_date) BETWEEN DATE(#{startDate}) AND DATE(#{endDate})
+    </select>
+
+</mapper>

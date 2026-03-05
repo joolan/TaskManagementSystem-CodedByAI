@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.UserMessageMapper">
+
+    <resultMap id="UserMessageResultMap" type="com.taskboard.backend.model.UserMessage">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="messageId" column="message_id"/>
+        <result property="isRead" column="is_read"/>
+        <result property="readAt" column="read_at"/>
+        <association property="message" javaType="com.taskboard.backend.model.Message">
+            <id property="id" column="message_id"/>
+            <result property="messageType" column="message_type"/>
+            <result property="title" column="message_title"/>
+            <result property="content" column="message_content"/>
+            <result property="redirectPath" column="redirect_path"/>
+            <result property="createdBy" column="message_created_by"/>
+            <result property="createdAt" column="message_created_at"/>
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        um.id, um.user_id, um.message_id, um.is_read, um.read_at
+    </sql>
+
+    <sql id="Join_Column_List">
+        m.id as message_id, m.message_type, m.title as message_title, m.content as message_content,
+        m.redirect_path, m.created_by as message_created_by, m.created_at as message_created_at
+    </sql>
+
+    <select id="findByUserId" resultMap="UserMessageResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM user_messages um
+        LEFT JOIN messages m ON um.message_id = m.id
+        WHERE um.user_id = #{userId}
+        ORDER BY um.id DESC
+    </select>
+
+    <select id="findByUserIdAndReadStatus" resultMap="UserMessageResultMap">
+        SELECT
+            <include refid="Base_Column_List"/>,
+            <include refid="Join_Column_List"/>
+        FROM user_messages um
+        LEFT JOIN messages m ON um.message_id = m.id
+        WHERE um.user_id = #{userId}
+        AND um.is_read = #{isRead}
+        ORDER BY um.id DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.UserMessage" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_messages (user_id, message_id, is_read, read_at)
+        VALUES (#{userId}, #{messageId}, #{isRead}, #{readAt})
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.UserMessage">
+        UPDATE user_messages
+        SET
+            is_read = #{isRead},
+            read_at = #{readAt}
+        WHERE id = #{id}
+    </update>
+
+    <select id="countUnread" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_messages
+        WHERE user_id = #{userId} AND is_read = 0
+    </select>
+
+</mapper>

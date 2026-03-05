@@ -1,6 +1,6 @@
-# 部门开发任务进度看板系统（AI编码开发）
+# 部门开发任务进度看板系统
 
-一个基于 Vue 3 + FastAPI + SQLite 的前后端分离任务看板系统，用于跟踪和管理部门内的开发任务。
+一个基于 Vue 3 + FastAPI/Java Spring Boot + MySQL 的前后端分离任务看板系统，用于跟踪和管理部门内的开发任务。
 
 ## 技术栈
 
@@ -14,7 +14,7 @@
 - ECharts
 - WangEditor 5（富文本编辑器）
 
-### 后端
+### 后端（Python 版本）
 - Python 3.9+
 - FastAPI
 - SQLite
@@ -22,7 +22,19 @@
 - Pydantic
 - JWT
 - Pandas（数据导出）
-- Openpyxl（Excel文件生成）
+- Openpyxl（Excel 文件生成）
+
+### 后端（Java 版本）✨ 新增
+- Java 1.8
+- Spring Boot 2.7.x
+- Spring Security
+- MyBatis 2.3.x
+- MySQL
+- JWT (JSON Web Token)
+- Apache POI（Excel 文件生成）
+- Lombok
+
+> **说明**: 本项目现已提供 Java Spring Boot 版本的后端实现，功能与 Python 版本完全对应。查看 Java 后端详细文档，请访问 [task-board-backend-java/README.md](task-board-backend-java/README.md)
 
 ## 功能特性
 
@@ -78,12 +90,12 @@
 │   │   ├── views/              # 页面
 │   │   ├── router/             # 路由
 │   │   ├── store/              # 状态管理
-│   │   ├── api/                # API服务
+│   │   ├── api/                # API 服务
 │   │   └── main.js             # 应用入口
 │   ├── package.json            # 前端依赖
-│   └── vite.config.js          # Vite配置
-├── task-board-backend/         # 后端项目
-│   ├── routes/                 # API路由
+│   └── vite.config.js          # Vite 配置
+├── task-board-backend/         # 后端项目（Python）
+│   ├── routes/                 # API 路由
 │   │   ├── menus.py            # 菜单管理路由
 │   │   ├── roles.py            # 角色管理路由
 │   ├── main.py                 # 后端入口
@@ -92,12 +104,33 @@
 │   ├── auth.py                 # 认证工具（包含权限校验）
 │   ├── requirements.txt        # 后端依赖
 │   └── generate_requirements.py # 生成测试数据脚本
+├── task-board-backend-java/    # 后端项目（Java Spring Boot）✨ 新增
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/
+│   │   │   │   └── com/
+│   │   │   │       └── taskboard/
+│   │   │   │           └── backend/
+│   │   │   │               ├── controller/     # 控制器
+│   │   │   │               ├── model/          # 数据模型
+│   │   │   │               ├── mapper/         # MyBatis Mapper 接口
+│   │   │   │               ├── security/       # 安全相关
+│   │   │   │               ├── filter/         # 过滤器
+│   │   │   │               ├── aspect/         # AOP 切面（权限校验）
+│   │   │   │               └── annotation/     # 自定义注解
+│   │   │   └── resources/
+│   │   │       ├── application.properties      # 应用配置
+│   │   │       └── mapper/                     # MyBatis XML Mapper 文件
+│   │   └── test/                               # 测试代码
+│   ├── build.gradle        # Gradle 配置
+│   ├── gradlew             # Gradle wrapper 脚本
+│   └── README.md           # Java 后端详细说明
 └── README.md                   # 项目说明
 ```
 
 ## 快速开始
 
-### 后端启动
+### Python 后端启动
 
 1. 进入后端目录
 ```bash
@@ -115,6 +148,35 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 ```
 
 后端服务将在 `http://localhost:8001` 运行。
+
+### Java 后端启动 ✨ 新增
+
+1. 进入 Java 后端目录
+```bash
+cd task-board-backend-java
+```
+
+2. 配置数据库
+   - 创建 MySQL 数据库：`CREATE DATABASE task_board CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+   - 修改 `src/main/resources/application.properties` 中的数据库连接信息
+
+3. 构建项目
+```bash
+./gradlew build
+```
+
+4. 启动后端服务
+```bash
+./gradlew bootRun
+```
+或直接运行 jar 包:
+```bash
+java -jar build/libs/task-board-backend-0.0.1-SNAPSHOT.jar
+```
+
+后端服务将在 `http://localhost:8003` 运行。
+
+> **详细文档**: Java 后端的完整启动说明、API 文档和开发指南，请查看 [task-board-backend-java/README.md](task-board-backend-java/README.md)
 
 ### 前端启动
 

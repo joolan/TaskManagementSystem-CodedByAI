@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.taskboard.backend.mapper.AttachmentMapper">
+
+    <resultMap id="AttachmentResultMap" type="com.taskboard.backend.model.Attachment">
+        <id property="id" column="id"/>
+        <result property="taskId" column="task_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="commentId" column="comment_id"/>
+        <result property="filename" column="filename"/>
+        <result property="filePath" column="file_path"/>
+        <result property="createdAt" column="created_at"/>
+        
+        <association property="task" javaType="com.taskboard.backend.model.Task">
+            <id property="id" column="task_id"/>
+            <result property="title" column="task_title"/>
+        </association>
+        
+        <association property="user" javaType="com.taskboard.backend.model.User">
+            <id property="id" column="user_id"/>
+            <result property="username" column="user_username"/>
+            <result property="name" column="user_name"/>
+        </association>
+        
+        <association property="comment" javaType="com.taskboard.backend.model.Comment">
+            <id property="id" column="comment_id"/>
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, task_id, user_id, comment_id, filename, file_path, created_at
+    </sql>
+
+    <sql id="Join_Column_List">
+        t.title as task_title,
+        u.username as user_username,
+        u.name as user_name
+    </sql>
+
+    <select id="findById" resultMap="AttachmentResultMap">
+        SELECT
+            a.*,
+            <include refid="Join_Column_List"/>
+        FROM attachments a
+        LEFT JOIN tasks t ON a.task_id = t.id
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="AttachmentResultMap">
+        SELECT
+            a.*,
+            <include refid="Join_Column_List"/>
+        FROM attachments a
+        LEFT JOIN tasks t ON a.task_id = t.id
+        LEFT JOIN users u ON a.user_id = u.id
+        ORDER BY a.created_at DESC
+    </select>
+
+    <select id="findByTaskId" resultMap="AttachmentResultMap">
+        SELECT
+            a.*,
+            <include refid="Join_Column_List"/>
+        FROM attachments a
+        LEFT JOIN tasks t ON a.task_id = t.id
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.task_id = #{taskId}
+        ORDER BY a.created_at DESC
+    </select>
+
+    <select id="findByCommentId" resultMap="AttachmentResultMap">
+        SELECT
+            a.*,
+            <include refid="Join_Column_List"/>
+        FROM attachments a
+        LEFT JOIN tasks t ON a.task_id = t.id
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.comment_id = #{commentId}
+        ORDER BY a.created_at DESC
+    </select>
+
+    <select id="findByUserId" resultMap="AttachmentResultMap">
+        SELECT
+            a.*,
+            <include refid="Join_Column_List"/>
+        FROM attachments a
+        LEFT JOIN tasks t ON a.task_id = t.id
+        LEFT JOIN users u ON a.user_id = u.id
+        WHERE a.user_id = #{userId}
+        ORDER BY a.created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.taskboard.backend.model.Attachment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO attachments (
+            task_id,
+            user_id,
+            comment_id,
+            filename,
+            file_path,
+            created_at
+        ) VALUES (
+            #{taskId},
+            #{userId},
+            #{commentId},
+            #{filename},
+            #{filePath},
+            #{createdAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.taskboard.backend.model.Attachment">
+        UPDATE attachments
+        <set>
+            <if test="taskId != null">task_id = #{taskId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="commentId != null">comment_id = #{commentId},</if>
+            <if test="filename != null">filename = #{filename},</if>
+            <if test="filePath != null">file_path = #{filePath},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM attachments WHERE id = #{id}
+    </delete>
+
+</mapper>
